@@ -607,13 +607,13 @@
     </div>
     <div class="setting-row">
       <label><input type="checkbox" id="webhook-enabled"> Send Discord webhook if server turns off</label>
-      <p class="setting-hint">Triggers only when server changes from online to offline.</p>
       <input class="webhook-input" id="webhook-url" type="url" placeholder="https://discord.com/api/webhooks/..." />
       <label><input type="checkbox" id="webhook-on-whitelist-enabled"> Notify when whitelist is enabled</label>
       <label><input type="checkbox" id="webhook-on-whitelist-disabled"> Notify when whitelist is disabled</label>
       <label><input type="checkbox" id="webhook-custom-enabled"> Send custom log message</label>
       <input class="webhook-input" id="webhook-custom-message" type="text" placeholder="Custom log message..." />
       <p class="setting-hint">Choose exactly which webhook events you want to send.</p>
+      <p class="setting-hint">Triggers only when server changes from online to offline.</p>
     </div>
   </aside>
 
@@ -684,8 +684,8 @@
     let previousOnlineState = null;
     let previousWhitelistState = null;
 
-    var SETTINGS_KEY = "mcpvp-settings-v1";
-    var defaultSettings = {
+    const SETTINGS_KEY = "mcpvp-settings-v1";
+    const defaultSettings = {
       soundEnabled: false,
       webhookEnabled: false,
       webhookUrl: "",
@@ -694,7 +694,6 @@
       webhookCustomEnabled: false,
       webhookCustomMessage: ""
     };
-    var settings = loadSettings();
 
     function loadSettings() {
       try {
@@ -943,56 +942,43 @@
       }
     }
 
-    function initApp() {
-      refreshButton?.addEventListener("click", checkServer);
-      copyAddressButton?.addEventListener("click", copyServerAddress);
-      settingsButton?.addEventListener("click", () => settingsPanel?.classList.add("open"));
-      settingsClose?.addEventListener("click", () => settingsPanel?.classList.remove("open"));
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") settingsPanel?.classList.remove("open");
-      });
-
-      soundEnabledInput?.addEventListener("change", () => {
-        settings.soundEnabled = soundEnabledInput.checked;
-        saveSettings();
-      });
-      webhookEnabledInput?.addEventListener("change", () => {
-        settings.webhookEnabled = webhookEnabledInput.checked;
-        saveSettings();
-      });
-      webhookUrlInput?.addEventListener("input", () => {
-        settings.webhookUrl = webhookUrlInput.value.trim();
-        saveSettings();
-      });
-      webhookOnWhitelistEnabledInput?.addEventListener("change", () => {
-        settings.webhookOnWhitelistEnabled = webhookOnWhitelistEnabledInput.checked;
-        saveSettings();
-      });
-      webhookOnWhitelistDisabledInput?.addEventListener("change", () => {
-        settings.webhookOnWhitelistDisabled = webhookOnWhitelistDisabledInput.checked;
-        saveSettings();
-      });
-      webhookCustomEnabledInput?.addEventListener("change", () => {
-        settings.webhookCustomEnabled = webhookCustomEnabledInput.checked;
-        saveSettings();
-      });
-      webhookCustomMessageInput?.addEventListener("input", () => {
-        settings.webhookCustomMessage = webhookCustomMessageInput.value.trim();
-        saveSettings();
-      });
-
-      syncSettingsUI();
-      checkServer();
-      loadHistory();
-      setInterval(checkServer, POLL_INTERVAL_MS);
-      setInterval(loadHistory, POLL_INTERVAL_MS);
-    }
-
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", initApp, { once: true });
-    } else {
-      initApp();
-    }
+    refreshButton.addEventListener("click", checkServer);
+    copyAddressButton.addEventListener("click", copyServerAddress);
+    settingsButton.addEventListener("click", () => settingsPanel.classList.add("open"));
+    settingsClose.addEventListener("click", () => settingsPanel.classList.remove("open"));
+    soundEnabledInput.addEventListener("change", () => {
+      settings.soundEnabled = soundEnabledInput.checked;
+      saveSettings();
+    });
+    webhookEnabledInput.addEventListener("change", () => {
+      settings.webhookEnabled = webhookEnabledInput.checked;
+      saveSettings();
+    });
+    webhookUrlInput.addEventListener("input", () => {
+      settings.webhookUrl = webhookUrlInput.value.trim();
+      saveSettings();
+    });
+    webhookOnWhitelistEnabledInput.addEventListener("change", () => {
+      settings.webhookOnWhitelistEnabled = webhookOnWhitelistEnabledInput.checked;
+      saveSettings();
+    });
+    webhookOnWhitelistDisabledInput.addEventListener("change", () => {
+      settings.webhookOnWhitelistDisabled = webhookOnWhitelistDisabledInput.checked;
+      saveSettings();
+    });
+    webhookCustomEnabledInput.addEventListener("change", () => {
+      settings.webhookCustomEnabled = webhookCustomEnabledInput.checked;
+      saveSettings();
+    });
+    webhookCustomMessageInput.addEventListener("input", () => {
+      settings.webhookCustomMessage = webhookCustomMessageInput.value.trim();
+      saveSettings();
+    });
+    syncSettingsUI();
+    checkServer();
+    loadHistory();
+    setInterval(checkServer, POLL_INTERVAL_MS);
+    setInterval(loadHistory, POLL_INTERVAL_MS);
   </script>
 </body>
 </html>
