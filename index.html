@@ -607,6 +607,7 @@
     </div>
     <div class="setting-row">
       <label><input type="checkbox" id="webhook-enabled"> Send Discord webhook if server turns off</label>
+      <p class="setting-hint">Triggers only when server changes from online to offline.</p>
       <input class="webhook-input" id="webhook-url" type="url" placeholder="https://discord.com/api/webhooks/..." />
       <label><input type="checkbox" id="webhook-on-whitelist-enabled"> Notify when whitelist is enabled</label>
       <label><input type="checkbox" id="webhook-on-whitelist-disabled"> Notify when whitelist is disabled</label>
@@ -685,24 +686,27 @@
     let previousWhitelistState = null;
 
     const SETTINGS_KEY = "mcpvp-settings-v1";
-    const defaultSettings = {
-      soundEnabled: false,
-      webhookEnabled: false,
-      webhookUrl: "",
-      webhookOnWhitelistEnabled: false,
-      webhookOnWhitelistDisabled: false,
-      webhookCustomEnabled: false,
-      webhookCustomMessage: ""
-    };
 
-    function loadSettings() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
-        return { ...defaultSettings, ...saved };
-      } catch {
-        return { ...defaultSettings };
-      }
-    }
+const defaultSettings = {
+  soundEnabled: false,
+  webhookEnabled: false,
+  webhookUrl: "",
+  webhookOnWhitelistEnabled: false,
+  webhookOnWhitelistDisabled: false,
+  webhookCustomEnabled: false,
+  webhookCustomMessage: ""
+};
+
+let settings = loadSettings();
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    return { ...defaultSettings, ...saved };
+  } catch {
+    return { ...defaultSettings };
+  }
+}
 
     function saveSettings() {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -942,6 +946,56 @@
       }
     }
 
+    function initApp() {
+      refreshButton?.addEventListener("click", checkServer);
+      copyAddressButton?.addEventListener("click", copyServerAddress);
+      settingsButton?.addEventListener("click", () => settingsPanel?.classList.add("open"));
+      settingsClose?.addEventListener("click", () => settingsPanel?.classList.remove("open"));
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") settingsPanel?.classList.remove("open");
+      });
+
+      soundEnabledInput?.addEventListener("change", () => {
+        settings.soundEnabled = soundEnabledInput.checked;
+        saveSettings();
+      });
+      webhookEnabledInput?.addEventListener("change", () => {
+        settings.webhookEnabled = webhookEnabledInput.checked;
+        saveSettings();
+      });
+      webhookUrlInput?.addEventListener("input", () => {
+        settings.webhookUrl = webhookUrlInput.value.trim();
+        saveSettings();
+      });
+      webhookOnWhitelistEnabledInput?.addEventListener("change", () => {
+        settings.webhookOnWhitelistEnabled = webhookOnWhitelistEnabledInput.checked;
+        saveSettings();
+      });
+      webhookOnWhitelistDisabledInput?.addEventListener("change", () => {
+        settings.webhookOnWhitelistDisabled = webhookOnWhitelistDisabledInput.checked;
+        saveSettings();
+      });
+      webhookCustomEnabledInput?.addEventListener("change", () => {
+        settings.webhookCustomEnabled = webhookCustomEnabledInput.checked;
+        saveSettings();
+      });
+      webhookCustomMessageInput?.addEventListener("input", () => {
+        settings.webhookCustomMessage = webhookCustomMessageInput.value.trim();
+        saveSettings();
+      });
+
+      syncSettingsUI();
+      checkServer();
+      loadHistory();
+      setInterval(checkServer, POLL_INTERVAL_MS);
+      setInterval(loadHistory, POLL_INTERVAL_MS);
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initApp, { once: true });
+    } else {
+      initApp();
+    }
     refreshButton.addEventListener("click", checkServer);
     copyAddressButton.addEventListener("click", copyServerAddress);
     settingsButton.addEventListener("click", () => settingsPanel.classList.add("open"));
