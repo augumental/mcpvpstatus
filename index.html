@@ -608,6 +608,11 @@
     <div class="setting-row">
       <label><input type="checkbox" id="webhook-enabled"> Send Discord webhook if server turns off</label>
       <input class="webhook-input" id="webhook-url" type="url" placeholder="https://discord.com/api/webhooks/..." />
+      <label><input type="checkbox" id="webhook-on-whitelist-enabled"> Notify when whitelist is enabled</label>
+      <label><input type="checkbox" id="webhook-on-whitelist-disabled"> Notify when whitelist is disabled</label>
+      <label><input type="checkbox" id="webhook-custom-enabled"> Send custom log message</label>
+      <input class="webhook-input" id="webhook-custom-message" type="text" placeholder="Custom log message..." />
+      <p class="setting-hint">Choose exactly which webhook events you want to send.</p>
       <p class="setting-hint">Triggers only when server changes from online to offline.</p>
     </div>
   </aside>
@@ -657,12 +662,25 @@
     const soundEnabledInput = document.querySelector("#sound-enabled");
     const webhookEnabledInput = document.querySelector("#webhook-enabled");
     const webhookUrlInput = document.querySelector("#webhook-url");
+    const webhookOnWhitelistEnabledInput = document.querySelector("#webhook-on-whitelist-enabled");
+    const webhookOnWhitelistDisabledInput = document.querySelector("#webhook-on-whitelist-disabled");
+    const webhookCustomEnabledInput = document.querySelector("#webhook-custom-enabled");
+    const webhookCustomMessageInput = document.querySelector("#webhook-custom-message");
 
     let checking = false;
     let previousOnlineState = null;
     let previousWhitelistState = null;
 
     const SETTINGS_KEY = "mcpvp-settings-v1";
+    const defaultSettings = {
+      soundEnabled: false,
+      webhookEnabled: false,
+      webhookUrl: "",
+      webhookOnWhitelistEnabled: false,
+      webhookOnWhitelistDisabled: false,
+      webhookCustomEnabled: false,
+      webhookCustomMessage: ""
+    };
     const defaultSettings = { soundEnabled: false, webhookEnabled: false, webhookUrl: "" };
     let settings = loadSettings();
 
@@ -683,6 +701,10 @@
       soundEnabledInput.checked = !!settings.soundEnabled;
       webhookEnabledInput.checked = !!settings.webhookEnabled;
       webhookUrlInput.value = settings.webhookUrl || "";
+      webhookOnWhitelistEnabledInput.checked = !!settings.webhookOnWhitelistEnabled;
+      webhookOnWhitelistDisabledInput.checked = !!settings.webhookOnWhitelistDisabled;
+      webhookCustomEnabledInput.checked = !!settings.webhookCustomEnabled;
+      webhookCustomMessageInput.value = settings.webhookCustomMessage || "";
     }
 
     function playTone(type) {
@@ -849,6 +871,15 @@
         if (previousWhitelistState && previousWhitelistState !== state) {
           if (state === "open") playTone("ding");
           if (state === "closed") playTone("bloop");
+          if (state === "open" && settings.webhookOnWhitelistDisabled) {
+            sendWebhookMessage(`✅ MCPVP whitelist disabled (server open) at ${new Date().toISOString()}.`);
+          }
+          if (state === "closed" && settings.webhookOnWhitelistEnabled) {
+            sendWebhookMessage(`🔒 MCPVP whitelist enabled (server closed) at ${new Date().toISOString()}.`);
+          }
+          if (settings.webhookCustomEnabled && settings.webhookCustomMessage) {
+            sendWebhookMessage(settings.webhookCustomMessage);
+          }
         }
         if (previousOnlineState === true && data.online === false) {
           const now = new Date().toISOString();
@@ -914,6 +945,22 @@
     });
     webhookUrlInput.addEventListener("input", () => {
       settings.webhookUrl = webhookUrlInput.value.trim();
+      saveSettings();
+    });
+    webhookOnWhitelistEnabledInput.addEventListener("change", () => {
+      settings.webhookOnWhitelistEnabled = webhookOnWhitelistEnabledInput.checked;
+      saveSettings();
+    });
+    webhookOnWhitelistDisabledInput.addEventListener("change", () => {
+      settings.webhookOnWhitelistDisabled = webhookOnWhitelistDisabledInput.checked;
+      saveSettings();
+    });
+    webhookCustomEnabledInput.addEventListener("change", () => {
+      settings.webhookCustomEnabled = webhookCustomEnabledInput.checked;
+      saveSettings();
+    });
+    webhookCustomMessageInput.addEventListener("input", () => {
+      settings.webhookCustomMessage = webhookCustomMessageInput.value.trim();
       saveSettings();
     });
     syncSettingsUI();
