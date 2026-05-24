@@ -629,16 +629,29 @@
         `https://corsproxy.io/?${encodeURIComponent(url)}`,
         `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
       ];
+      const errors = [];
       for (const attempt of attempts) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
         try {
-          const res = await fetch(attempt, { cache: "no-store" });
-          if (res.ok) {
+          const res = await fetch(attempt, { cache: "no-store", signal: controller.signal });
+          if (!res.ok) {
+            errors.push(`${attempt} -> HTTP ${res.status}`);
+            continue;
+          }
+          try {
+            return await res.json();
+          } catch {
             const text = await res.text();
             return JSON.parse(text);
           }
-        } catch {}
+        } catch (error) {
+          errors.push(`${attempt} -> ${error?.message || 'request failed'}`);
+        } finally {
+          clearTimeout(timeout);
+        }
       }
-      throw new Error("All endpoints failed — check your internet connection.");
+      throw new Error(`All endpoints failed. ${errors[0] || 'No response from API.'}`);
     }
 
     const statusCard = document.querySelector("#status-card");
