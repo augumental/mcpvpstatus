@@ -3,94 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="BlaySMP is a premium futuristic Minecraft survival multiplayer server with economy, PvP, events, crates, and a live server status for blaysmp.net.">
-  <meta name="theme-color" content="#05070f">
-  <meta property="og:title" content="BlaySMP — Next Generation Survival Experience">
-  <meta property="og:description" content="Join BlaySMP at blaysmp.net for a cyberpunk Minecraft SMP experience with live status, events, shop, leaderboards, and community features.">
+  <meta name="description" content="badeye terminal bio - an immersive Linux terminal style single-page website.">
+  <meta name="theme-color" content="#000000">
+  <meta property="og:title" content="badeye@root:~$">
+  <meta property="og:description" content="SSH into badeye's terminal bio.">
   <meta property="og:type" content="website">
-  <title>BlaySMP — Next Generation Survival Experience</title>
-  <link rel="preconnect" href="https://api.mcstatus.io">
+  <title>badeye@root:~$</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="script.js" defer></script>
 </head>
 <body>
-  <div id="loader" class="loader" aria-label="Loading BlaySMP">
-    <div class="loader-mark">BLAYSMP<span>.NET</span></div>
-    <div class="loader-line"><i></i></div>
-  </div>
-
-  <div class="mouse-glow" aria-hidden="true"></div>
-  <canvas id="particle-canvas" aria-hidden="true"></canvas>
-  <div class="circuit-grid" aria-hidden="true"></div>
-
-  <header class="nav" aria-label="Primary navigation">
-    <a class="brand" href="#home" aria-label="BlaySMP home">BLAY<span>SMP</span></a>
-    <nav>
-      <a href="#home">Home</a><a href="#features">Features</a><a href="#store">Store</a><a href="#leaderboards">Leaderboards</a><a href="#wiki">Wiki</a><a href="#discord">Discord</a>
-    </nav>
-    <button id="copy-address" class="ip-pill" type="button"><span class="live-dot"></span><span id="server-address">blaysmp.net</span></button>
-  </header>
-
-  <main id="home">
-    <section class="hero section reveal">
-      <div class="hero-copy glass">
-        <p class="eyebrow">// Redline hologram SMP</p>
-        <h1 class="glitch" data-text="BLAYSMP">BLAYSMP</h1>
-        <p class="subtitle">The Next Generation Survival Experience.</p>
-        <button class="code-ip" id="hero-copy" type="button">connect <strong>blaysmp.net</strong></button>
-        <div class="hero-actions">
-          <a class="btn primary" href="#status">Play Now</a>
-          <a class="btn" href="#store">Store</a>
-          <a class="btn cyan" href="#discord">Discord</a>
-        </div>
-      </div>
-      <div class="holo-orbit" aria-hidden="true">
-        <span class="cube c1"></span><span class="cube c2"></span><span class="cube c3"></span>
-        <div class="planet">B</div>
-      </div>
-    </section>
-
-    <section id="status" class="section reveal">
-      <div class="section-head"><p class="eyebrow">// Live telemetry</p><h2>Server Status</h2><p>Auto-refreshes every 30 seconds from the public Minecraft status API.</p></div>
-      <article id="status-card" class="status-card glass unknown" aria-live="polite">
-        <div><p id="status-kicker" class="eyebrow">Pinging blaysmp.net</p><h3 id="status-title">Loading...</h3><p id="status-detail">Contacting network relay.</p></div>
-        <div class="player-counter"><span id="players-online">--</span><small>/<span id="players-max">--</span> players</small></div>
-        <div class="status-grid">
-          <div><span>Version</span><strong id="version">--</strong></div>
-          <div><span>Latency</span><strong id="latency">-- ms</strong></div>
-          <div><span>Uptime</span><strong id="uptime">99.9%</strong></div>
-          <div><span>Last scan</span><strong id="checked-at">--</strong></div>
-        </div>
-        <button id="refresh-button" class="btn small" type="button">Refresh</button>
-      </article>
-    </section>
-
-    <section id="features" class="section reveal"><div class="section-head"><p class="eyebrow">// Systems online</p><h2>Features</h2></div><div class="card-grid features" id="feature-grid"></div></section>
-
-    <section id="store" class="section reveal"><div class="section-head"><p class="eyebrow">// Premium vault</p><h2>Store</h2></div><div class="store-tabs"><button>Ranks</button><button>Keys</button><button>Royale Games</button><button>Royale Cosmetics</button></div><div class="card-grid products" id="product-grid"></div></section>
-
-    <section id="leaderboards" class="section stats reveal"><div class="section-head"><p class="eyebrow">// Network statistics</p><h2>Live Statistics</h2></div><div class="stat-grid">
-      <div class="glass"><strong class="count" data-target="0" id="stat-online">0</strong><span>Online Players</span></div>
-      <div class="glass"><strong class="count" data-target="18420">0</strong><span>Registered Players</span></div>
-      <div class="glass"><strong class="count" data-target="5260">0</strong><span>Discord Members</span></div>
-      <div class="glass"><strong class="count" data-target="780000">0</strong><span>Total Playtime Hours</span></div>
-      <div class="glass"><strong class="count" data-target="8">0</strong><span>Seasons Completed</span></div>
-    </div></section>
-
-    <section id="discord" class="section community reveal"><div class="section-head"><p class="eyebrow">// Community uplink</p><h2>Community</h2></div><div class="community-grid">
-      <article class="glass"><h3>Latest Announcements</h3><p>Season launch events, balance changes, and crate drops broadcast through the BlaySMP command center.</p></article>
-      <article class="glass discord-card"><h3>Discord Widget</h3><p>Join voice, claim roles, report issues, and receive live server alerts.</p><a class="btn cyan" href="https://discord.com" rel="noopener">Open Discord</a></article>
-      <article class="glass"><h3>Recent Updates</h3><ul><li>Royale cosmetics rotation refreshed.</li><li>Arena anti-cheat telemetry upgraded.</li><li>Black Market trader schedules expanded.</li></ul></article>
-      <article class="glass carousel"><h3>Screenshots</h3><div><span></span><span></span><span></span></div></article>
-      <article class="glass quote"><h3>Player Testimonials</h3><p>“Feels like a AAA Minecraft hub — fast, polished, and always alive.”</p></article>
-    </div></section>
-
-    <section id="wiki" class="section cta reveal glass"><p class="eyebrow">// Knowledge base</p><h2>Ready to enter the grid?</h2><p>Copy the IP, launch Minecraft Java, and connect to the BlaySMP survival network.</p><button class="btn primary" type="button" id="final-copy">Copy blaysmp.net</button></section>
+  <main id="terminal" class="terminal" aria-label="badeye Linux terminal" tabindex="0">
+    <div id="terminal-output" class="terminal-output" aria-live="polite" aria-atomic="false"></div>
+    <div id="input-line" class="input-line">
+      <span class="prompt"><span class="user">badeye@root</span><span class="punct">:</span><span class="dir">~</span><span class="punct">$</span></span><span id="command-buffer" class="command-buffer"></span><span id="cursor" class="cursor" aria-hidden="true">&nbsp;</span>
+      <label class="sr-only" for="terminal-input">Terminal input</label>
+      <textarea id="terminal-input" class="terminal-input" autocomplete="off" autocapitalize="off" spellcheck="false" rows="1"></textarea>
+    </div>
   </main>
-
-  <footer class="footer"><strong>BLAYSMP.NET</strong><div><a href="#store">Store</a><a href="#discord">Discord</a><a href="#wiki">Wiki</a></div><p>© 2026 BlaySMP. Futuristic survival, forged in neon.</p></footer>
 </body>
 </html>
