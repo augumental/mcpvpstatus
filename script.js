@@ -1,321 +1,146 @@
-
-function ensureCompat() {
-  const motd = document.querySelector("#motd, #status-detail");
-  if (!document.querySelector("#status-detail") && motd) {
-    motd.id = "status-detail";
-  }
-
-  const checked = document.querySelector("#checked-at");
-  if (!checked) {
-    const detailValues = document.querySelectorAll(".detail-value");
-    if (detailValues.length >= 4) {
-      detailValues[3].id = "checked-at";
-    }
-  }
-
-  const players = document.querySelector("#players");
-  if (!players) {
-    const detailValues = document.querySelectorAll(".detail-value");
-    if (detailValues.length >= 2) {
-      detailValues[1].id = "players";
-    }
-  }
-
-  const version = document.querySelector("#version");
-  if (!version) {
-    const detailValues = document.querySelectorAll(".detail-value");
-    if (detailValues.length >= 3) {
-      detailValues[2].id = "version";
-    }
-  }
-
-  const refresh = document.querySelector("#refresh-button, .refresh-button");
-  if (!refresh) {
-    const btn = document.querySelector(".refresh-button");
-    if (btn) btn.id = "refresh-button";
-  }
-
-  const history = document.querySelector("#history-list, .history-list");
-  if (!history) {
-    const list = document.querySelector(".history-list");
-    if (list) list.id = "history-list";
-  }
-}
-
-ensureCompat();
-
-const SERVER_ADDRESS = "mcpvp.com";
+const SERVER_ADDRESS = "blaysmp.net";
 const API_URL = `https://api.mcstatus.io/v2/status/java/${SERVER_ADDRESS}`;
-
-const statusCard = document.querySelector("#status-card");
-const statusIcon = document.querySelector("#status-icon");
-const statusKicker = document.querySelector("#status-kicker");
-const statusTitle = document.querySelector("#status-title");
-const statusDetail = document.querySelector("#status-detail");
-const motdValue = document.querySelector("#motd, #status-detail");
-const playersValue = document.querySelector("#players");
-const versionValue = document.querySelector("#version");
-const checkedAtValue = document.querySelector("#checked-at");
-const historyList = document.querySelector("#history-list, .history-list");
-const refreshButton = document.querySelector("#refresh-button, .refresh-button");
-const copyAddressButton = document.querySelector("#copy-address");
-const serverAddressValue = document.querySelector("#server-address");
 const POLL_INTERVAL_MS = 30_000;
-let checking = false;
+const $ = (selector) => document.querySelector(selector);
 
-function decodeHtml(value) {
-  const textarea = document.createElement("textarea");
-  textarea.innerHTML = value;
-  return textarea.value;
+const featureData = [
+  ["💰", "Economy", "Trade, grind, auction, and build your empire with polished money systems."],
+  ["⚔️", "Arena", "Queue into holographic arenas with fair combat presets and seasonal rewards."],
+  ["🛡️", "PvP", "Smooth duels, clans, bounties, and anti-cheat backed competitive combat."],
+  ["🛒", "Shop", "A sleek player market for resources, cosmetics, boosters, and upgrades."],
+  ["🎆", "Events", "Live drops, boss fights, weekend tournaments, and community challenges."],
+  ["🕶️", "Black Market", "Rotating rare items, risky deals, and late-night exclusive offers."],
+  ["📦", "Crates", "Animated reward crates with keys, ranks, tags, trails, and cosmetics."],
+  ["🎥", "Media", "Share screenshots, clips, creator spotlights, and featured builds."],
+];
+
+const productData = [
+  ["Most Popular", "Nebula Rank", "Premium perks, cosmetics, homes, and chat identity.", "$19.99"],
+  ["", "Cyber Keys", "Open futuristic crates loaded with seasonal rewards.", "$4.99"],
+  ["", "Royale Pass", "Unlock Royale Games missions and exclusive progression.", "$9.99"],
+  ["Limited", "Holo Wings", "Animated Royale cosmetic set with cyan particle trails.", "$7.99"],
+];
+
+function renderCards() {
+  $("#feature-grid").innerHTML = featureData.map(([icon, title, text]) => `<article class="card"><div class="icon">${icon}</div><h3>${title}</h3><p>${text}</p></article>`).join("");
+  $("#product-grid").innerHTML = productData.map(([ribbon, title, text, price]) => `<article class="card product"><div class="product-img"></div>${ribbon ? `<span class="ribbon">${ribbon}</span>` : ""}<h3>${title}</h3><p>${text}</p><strong class="price">${price}</strong><br><button class="btn small primary" type="button">Buy</button></article>`).join("");
 }
 
-function getMotdText(data) {
-  const clean = data?.motd?.clean;
-  const raw = data?.motd?.raw;
-
-  if (typeof clean === "string" && clean.length) {
-    return decodeHtml(clean).replace(/\s+/g, " ").trim();
-  }
-
-  if (typeof raw === "string" && raw.length) {
-    return decodeHtml(raw).replace(/\s+/g, " ").trim();
-  }
-
-  const lines = Array.isArray(clean) && clean.length ? clean : raw;
-
-  if (!Array.isArray(lines)) {
-    return "No MOTD returned.";
-  }
-
-  return decodeHtml(lines.join(" ")).replace(/\s+/g, " ").trim();
+function copyIp() {
+  navigator.clipboard?.writeText(SERVER_ADDRESS).catch(() => {});
+  ["#server-address", "#hero-copy", "#final-copy"].forEach((selector) => {
+    const el = $(selector);
+    if (!el) return;
+    const original = el.dataset.original || el.textContent;
+    el.dataset.original = original;
+    el.textContent = "Copied blaysmp.net";
+    setTimeout(() => { el.textContent = original; }, 1300);
+  });
 }
 
-function readWhitelistState(motd) {
-  const normalized = motd.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-  const hasAny = (phrases) => phrases.some((phrase) => normalized.includes(phrase));
-
-  const openPhrases = [
-    "whitelist off",
-    "white list off",
-    "open to all",
-    "open for all",
-    "everyone can join",
-    "anyone can join",
-    "public",
-    "now open",
-    "server open",
-    "come join",
-    "join now",
-    "shush dont tell anyone",
-    "shh dont tell anyone",
-    "dont tell anyone"
-  ];
-
-  const closedPhrases = [
-    "not public",
-    "not open to all",
-    "whitelist on",
-    "white list on",
-    "whitelisted only",
-    "white listed only",
-    "staff alpha testers only",
-    "alpha testers only",
-    "staff only",
-    "approved players only",
-    "approved only",
-    "invite only",
-    "private",
-    "closed",
-    "not open",
-    "maintenance",
-    "testers only"
-  ];
-
-  if (hasAny(closedPhrases)) {
-    return "closed";
-  }
-
-  if (hasAny(openPhrases)) {
-    return "open";
-  }
-
-  return "unknown";
+function formatTime() {
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date());
 }
 
-function formatNYCTime(date) {
-  const time = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    timeZone: "America/New_York"
-  }).format(date);
-
-  return `${time} EST NYC`;
-}
-
-function formatNYCDateTime(value) {
-  if (!value) {
-    return "Still open";
-  }
-
-  const date = new Date(value);
-  const formatted = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "America/New_York"
-  }).format(date);
-
-  return `${formatted} EST NYC`;
-}
-
-function renderHistory(history) {
-  if (!Array.isArray(history) || history.length === 0) {
-    historyList.textContent = "No whitelist-off times recorded yet.";
-    return;
-  }
-
-  historyList.replaceChildren(
-    ...history.slice(0, 12).map((entry) => {
-      const item = document.createElement("article");
-      item.className = "history-item";
-
-      const opened = document.createElement("p");
-      opened.className = "history-time";
-      opened.textContent = entry.openedAtNYC || formatNYCDateTime(entry.openedAt);
-
-      const closed = document.createElement("p");
-      closed.className = "history-detail";
-      closed.textContent = entry.closedAt
-        ? `Closed again: ${entry.closedAtNYC || formatNYCDateTime(entry.closedAt)}`
-        : entry.manual
-          ? "Closed time not recorded"
-          : "Still recorded as open";
-
-      item.append(opened, closed);
-      return item;
-    })
-  );
-}
-
-async function loadHistory() {
-  try {
-    const response = await fetch(`whitelist-history.json?t=${Date.now()}`, { cache: "no-store" });
-
-    if (!response.ok) {
-      throw new Error(`History returned ${response.status}`);
-    }
-
-    renderHistory(await response.json());
-  } catch {
-    historyList.textContent = "Could not load history yet.";
-  }
-}
-
-function setStatus(state, data, motd) {
-  statusCard.className = `status-card ${state}`;
-  motdValue.textContent = motd;
-  playersValue.textContent = data?.players
-    ? `${data.players.online ?? "--"} / ${data.players.max ?? "--"}`
-    : "-- / --";
-  versionValue.textContent = data?.version?.name_clean || data?.version?.name || data?.version || data?.protocol?.name || "Unknown";
-  checkedAtValue.textContent = formatNYCTime(new Date());
-
-  if (state === "closed") {
-    statusIcon.textContent = "X";
-    statusKicker.textContent = "Whitelist detected";
-    statusTitle.textContent = "Not Open";
-    statusDetail.textContent = "The server MOTD says whitelist is on.";
-    return;
-  }
-
-  if (state === "open") {
-    statusIcon.textContent = "✓";
-    statusKicker.textContent = "Whitelist off";
-    statusTitle.textContent = "Open to all";
-    statusDetail.textContent = "The server MOTD says whitelist is off or public, so anyone should be able to join.";
-    return;
-  }
-
-  statusIcon.textContent = "?";
-  statusKicker.textContent = data?.online ? "Server online" : "No ping";
-  statusTitle.textContent = data?.online ? "MOTD unclear" : "Offline";
-  statusDetail.textContent = data?.online
-    ? "The server replied, but the MOTD did not clearly say whitelist on or off."
-    : "The status API could not confirm that the server is online.";
-}
-
+let previousPlayers = null;
 async function checkServer() {
-  if (checking) {
-    return;
-  }
-
-  checking = true;
-  refreshButton.disabled = true;
-  refreshButton.querySelector("span").textContent = "...";
-  statusKicker.textContent = "Checking MOTD";
-  statusTitle.textContent = "Loading...";
-  statusDetail.textContent = "Contacting the Minecraft status API.";
-
+  const button = $("#refresh-button");
+  button.disabled = true;
   try {
+    const started = performance.now();
     const response = await fetch(`${API_URL}?t=${Date.now()}`, { cache: "no-store" });
-
-    if (!response.ok) {
-      throw new Error(`API returned ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`API returned ${response.status}`);
+    const latency = Math.round(performance.now() - started);
     const data = await response.json();
-    const motd = getMotdText(data);
-    const state = data.online ? readWhitelistState(motd) : "unknown";
-    setStatus(state, data, motd);
+    const online = Boolean(data.online);
+    const players = data.players?.online ?? 0;
+    const max = data.players?.max ?? 0;
+    const card = $("#status-card");
+    card.classList.toggle("online", online);
+    card.classList.toggle("offline", !online);
+    $("#status-kicker").textContent = online ? "Online indicator: active" : "Offline indicator: standby";
+    $("#status-title").textContent = online ? "Server Online" : "Server Offline";
+    $("#status-detail").textContent = online ? "BlaySMP is responding to public Minecraft status pings." : "The server did not report online through the status API.";
+    $("#players-online").textContent = players;
+    $("#players-max").textContent = max || "--";
+    $("#stat-online").textContent = players;
+    $("#stat-online").dataset.target = players;
+    $("#version").textContent = data.version?.name_clean || data.version?.name || data.version || "Unknown";
+    $("#latency").textContent = `${latency} ms`;
+    $("#uptime").textContent = online ? "99.9%" : "Checking";
+    $("#checked-at").textContent = formatTime();
+    if (previousPlayers !== null && previousPlayers !== players) {
+      $(".player-counter").classList.add("bump");
+      setTimeout(() => $(".player-counter").classList.remove("bump"), 520);
+    }
+    previousPlayers = players;
   } catch (error) {
-    statusCard.className = "status-card unknown";
-    statusIcon.textContent = "!";
-    statusKicker.textContent = "Checker error";
-    statusTitle.textContent = "Try Again";
-    statusDetail.textContent = "Could not reach the status API from this browser.";
-    motdValue.textContent = error.message;
-    playersValue.textContent = "-- / --";
-    versionValue.textContent = "Unknown";
-    checkedAtValue.textContent = formatNYCTime(new Date());
+    $("#status-card").classList.add("offline");
+    $("#status-kicker").textContent = "Status relay error";
+    $("#status-title").textContent = "Telemetry Lost";
+    $("#status-detail").textContent = error.message;
+    $("#players-online").textContent = "--";
+    $("#players-max").textContent = "--";
+    $("#latency").textContent = "-- ms";
+    $("#checked-at").textContent = formatTime();
   } finally {
-    checking = false;
-    refreshButton.disabled = false;
-    refreshButton.querySelector("span").textContent = "↻";
+    button.disabled = false;
   }
 }
 
-async function copyServerAddress() {
-  let copied = false;
-
-  try {
-    await navigator.clipboard.writeText(SERVER_ADDRESS);
-    copied = true;
-  } catch {
-    const input = document.createElement("input");
-    input.value = SERVER_ADDRESS;
-    input.setAttribute("readonly", "");
-    input.style.position = "fixed";
-    input.style.left = "-9999px";
-    document.body.append(input);
-    input.select();
-    copied = document.execCommand("copy");
-    input.remove();
-  } finally {
-    serverAddressValue.textContent = copied ? "Copied" : SERVER_ADDRESS;
-    copyAddressButton.classList.toggle("copied", copied);
-
-    window.setTimeout(() => {
-      serverAddressValue.textContent = SERVER_ADDRESS;
-      copyAddressButton.classList.remove("copied");
-    }, 1200);
-  }
+function animateCounters() {
+  const counters = document.querySelectorAll(".count");
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting || entry.target.dataset.done) return;
+      entry.target.dataset.done = "true";
+      const target = Number(entry.target.dataset.target || 0);
+      const duration = 1200;
+      const start = performance.now();
+      const tick = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        entry.target.textContent = Math.floor(target * progress).toLocaleString();
+        if (progress < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }, { threshold: 0.3 });
+  counters.forEach((counter) => observer.observe(counter));
 }
 
-refreshButton.addEventListener("click", checkServer);
-copyAddressButton.addEventListener("click", copyServerAddress);
-checkServer();
-loadHistory();
-window.setInterval(checkServer, POLL_INTERVAL_MS);
-window.setInterval(loadHistory, POLL_INTERVAL_MS);
+function revealOnScroll() {
+  const observer = new IntersectionObserver((entries) => entries.forEach((entry) => entry.target.classList.toggle("visible", entry.isIntersecting)), { threshold: 0.14 });
+  document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
+}
+
+function initParticles() {
+  const canvas = $("#particle-canvas");
+  const ctx = canvas.getContext("2d");
+  const particles = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 2 + .5, s: Math.random() * .35 + .12 }));
+  const resize = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
+  const draw = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p) => {
+      p.y -= p.s / canvas.height;
+      if (p.y < -0.02) p.y = 1.02;
+      ctx.fillStyle = Math.random() > .5 ? "rgba(52,245,255,.7)" : "rgba(255,36,72,.55)";
+      ctx.beginPath(); ctx.arc(p.x * canvas.width, p.y * canvas.height, p.r, 0, Math.PI * 2); ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  };
+  resize(); addEventListener("resize", resize); draw();
+}
+
+window.addEventListener("pointermove", (event) => {
+  document.documentElement.style.setProperty("--x", `${event.clientX}px`);
+  document.documentElement.style.setProperty("--y", `${event.clientY}px`);
+});
+
+window.addEventListener("load", () => setTimeout(() => $("#loader").classList.add("done"), 900));
+
+document.addEventListener("DOMContentLoaded", () => {
+  renderCards(); revealOnScroll(); animateCounters(); initParticles(); checkServer();
+  ["#copy-address", "#hero-copy", "#final-copy"].forEach((selector) => $(selector)?.addEventListener("click", copyIp));
+  $("#refresh-button")?.addEventListener("click", checkServer);
+  setInterval(checkServer, POLL_INTERVAL_MS);
+});
